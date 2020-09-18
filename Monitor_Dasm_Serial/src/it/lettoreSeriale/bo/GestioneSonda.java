@@ -11,15 +11,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.sql.rowset.serial.SerialException;
+
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
+
 import it.lettoreSeriale.DTO.SondaDTO;
-import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
-import jssc.SerialPortException;
 
 
 
-public class GestioneSonda implements SerialPortEventListener{
+public class GestioneSonda implements SerialPortDataListener{
 	
 	SerialPort serialPort;
 	
@@ -33,7 +35,7 @@ public class GestioneSonda implements SerialPortEventListener{
 	    
 	}
 	
-	public static ArrayList<SondaDTO> getListaSonde(PortReader portReader) throws SerialPortException {
+	public static ArrayList<SondaDTO> getListaSonde(PortRead portReader) throws SerialException {
 
 		ArrayList<SondaDTO> listaSonde= new ArrayList<>();
 
@@ -138,7 +140,7 @@ public class GestioneSonda implements SerialPortEventListener{
 		return listaSondeOrdinata;
 	}
 
-	public static Double getValue(SondaDTO sonda,PortReader portReader) throws SerialPortException {
+	public static Double getValue(SondaDTO sonda,PortRead portReader) throws SerialException {
 
 		Double toReturn=null;
 		
@@ -156,7 +158,7 @@ public class GestioneSonda implements SerialPortEventListener{
 						if(msg.startsWith(sonda.getId_sonda()+"="))
 						{
 							toReturn=Double.parseDouble(msg.substring(msg.indexOf("=")+1, msg.indexOf("[")));
-							System.out.println(toReturn);
+						//	System.out.println(toReturn);
 							return toReturn;
 						}
 					}catch (Exception e) 
@@ -197,28 +199,55 @@ public class GestioneSonda implements SerialPortEventListener{
 		return sortedHashMap;
 	}
 
+	
+//	public void serialEvent(SerialPortEvent event) {
+//		  if (event.. && event.getEventValue() > 0) {
+//		        try {
+//		        
+//						
+//						 String receivedData = serialPort.readString(event.getEventValue());
+//						 String[] parts= receivedData.split("\\n");
+//				         
+//						 for (int i = 0; i < parts.length; i++) {
+//							 System.out.println(parts[i].replaceAll("\\r", ""));
+//						}
+//							
+//						
+//						// System.out.println(receivedData);
+//					
+//		           
+//		        } catch (SerialPortException ex) {
+//		            System.out.println("Error in receiving string from COM-port: " + ex);
+//		        }
+//		    }
+//		
+//	}
+
 	@Override
-	public void serialEvent(SerialPortEvent event) {
-		  if (event.isRXCHAR() && event.getEventValue() > 0) {
-		        try {
-		        
-						
-						 String receivedData = serialPort.readString(event.getEventValue());
-						 String[] parts= receivedData.split("\\n");
-				         
-						 for (int i = 0; i < parts.length; i++) {
-							 System.out.println(parts[i].replaceAll("\\r", ""));
-						}
-							
-						
-						// System.out.println(receivedData);
-					
-		           
-		        } catch (SerialPortException ex) {
-		            System.out.println("Error in receiving string from COM-port: " + ex);
-		        }
-		    }
+	public int getListeningEvents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void serialEvent(SerialPortEvent arg0) {
 		
+	    
+//	try {	
+//		 String receivedData = serialPort.re
+//		 String[] parts= receivedData.split("\\n");
+//         
+//		 for (int i = 0; i < parts.length; i++) {
+//			 System.out.println(parts[i].replaceAll("\\r", ""));
+//		}
+//			
+		
+		// System.out.println(receivedData);
+	
+   
+//} catch (SerialException ex) {
+//    System.out.println("Error in receiving string from COM-port: " + ex);
+//}
 	}
 
 

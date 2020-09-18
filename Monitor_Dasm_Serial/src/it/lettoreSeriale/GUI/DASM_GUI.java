@@ -2,6 +2,7 @@ package it.lettoreSeriale.GUI;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,36 +13,36 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import com.fazecast.jSerialComm.SerialPort;
+
 import it.lettoreSeriale.DTO.SondaDTO;
 import it.lettoreSeriale.bo.GestioneSonda;
-import it.lettoreSeriale.bo.PortReader;
+import it.lettoreSeriale.bo.PortRead;
 import it.lettoreSeriale.bo.Serial;
-import jssc.SerialPort;
-import jssc.SerialPortException;
-import java.awt.Font;
+
 
 public class DASM_GUI extends JFrame {
 	
 	JFrame g=null;
 	JPanel initPanel;
 	JScrollPane scrollPane;
-	PortReader portReader;
-	jssc.SerialPort serialPort;
+	PortRead portReader;
+	SerialPort serialPort;
 	
 	
 	public static HashMap<Long, String> msgsOrd = new HashMap<Long, String>();
 	public ArrayList<SondaDTO> listaSonde= new ArrayList<SondaDTO>();
-	private JTextField txtCom;
-	private JTextField textField_1;
+	private JComboBox<String> listPort;
 	
 	public DASM_GUI()
 	{
@@ -63,7 +64,7 @@ public class DASM_GUI extends JFrame {
 		}
 		
 		setTitle("DASM Monitor\u00AE");
-		setSize(300,650);
+		setSize(400,650);
 		setResizable(false);
 		g=this;
 		
@@ -75,15 +76,10 @@ public class DASM_GUI extends JFrame {
 	            @Override
 	            public void windowClosing(WindowEvent e)
 	            {
-	                if(serialPort!=null && serialPort.isOpened()) 
+	                if(serialPort!=null && serialPort.isOpen()) 
 	                {
-	                	try {
-	                		System.out.println("Disconnect");
-							serialPort.closePort();
-						} catch (SerialPortException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
+	                	System.out.println("Disconnect");
+						serialPort.closePort();
 	                }
 	                e.getWindow().dispose();
 	            }
@@ -94,7 +90,7 @@ public class DASM_GUI extends JFrame {
 	private void costruisciFrame() {
 		
 		initPanel = new JPanel();
-		initPanel.setSize(300,650);
+		initPanel.setSize(400,650);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		int x = (dim.width - initPanel.getWidth()) / 2;
 		int y = (dim.height - initPanel.getHeight()) / 2;
@@ -103,12 +99,12 @@ public class DASM_GUI extends JFrame {
 		initPanel.setLayout(null);
 		
 		scrollPane = new JScrollPane(initPanel);
-		scrollPane.setSize(new Dimension(240,  630));
+		scrollPane.setSize(new Dimension(340,  630));
 		scrollPane.setBackground(Color.red);
 	
 		JButton btnConnect = new JButton("Connect");
 		btnConnect.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 14));
-		btnConnect.setBounds(105, 50, 90, 25);
+		btnConnect.setBounds(155, 50, 90, 25);
 		initPanel.add(btnConnect);
 		
 		JLabel lblPort = new JLabel("Port");
@@ -116,55 +112,31 @@ public class DASM_GUI extends JFrame {
 		lblPort.setBounds(10, 22, 54, 14);
 		initPanel.add(lblPort);
 		
-		txtCom = new JTextField();
-		txtCom.setFont(new Font("Arial", Font.PLAIN, 14));
-		txtCom.setText("COM");
-		txtCom.setBounds(47, 19, 62, 20);
-		initPanel.add(txtCom);
-		txtCom.setColumns(10);
+		listPort = new JComboBox<String>();
+		listPort.setFont(new Font("Arial", Font.PLAIN, 12));
+		listPort.setBounds(47, 19, 335, 20);
+		initPanel.add(listPort);
 		
-		JLabel lblRate = new JLabel("Rate");
-		lblRate.setFont(new Font("Arial", Font.BOLD, 14));
-		lblRate.setBounds(154, 22, 41, 14);
-		initPanel.add(lblRate);
+		SerialPort[] list = SerialPort.getCommPorts();
 		
-		textField_1 = new JTextField();
-		textField_1.setFont(new Font("Arial", Font.PLAIN, 14));
-		textField_1.setText("115200");
-		textField_1.setBounds(191, 19, 80, 20);
-		initPanel.add(textField_1);
-		textField_1.setColumns(10);
-		
-		
+		for (SerialPort serialPort : list) {
+			
+			listPort.addItem(serialPort.getDescriptivePortName());
+		}
 		btnConnect.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 			
-				int rate=0;
 				try
 				{
-					
-					rate=Integer.parseInt(textField_1.getText());
-				}catch (Exception e) {
-					
-					JOptionPane.showMessageDialog(null, "Il campo Rate accetta solo numeri");
-					return;
-				}
-				
-
-				try
-				{
-				   serialPort =Serial.getConnection(txtCom.getText(), rate);
+				   serialPort =Serial.getConnection(listPort.getSelectedIndex());
 				   
-				   portReader = new PortReader(serialPort);
-
-				   serialPort.addEventListener(portReader, SerialPort.MASK_RXCHAR);
-				   
+				   portReader = new PortRead(serialPort);
 
 				   Thread.sleep(1000);
 
-				  listaSonde=GestioneSonda.getListaSonde(portReader);
+				   listaSonde=GestioneSonda.getListaSonde(portReader);
 				}
 		
 				
@@ -180,8 +152,9 @@ public class DASM_GUI extends JFrame {
 					SondaDTO sonda = (SondaDTO) iterator.next();
 					
 					JButton btnSnd= new JButton("["+sonda.getId_sonda()+"] "+sonda.getLabel());
-					btnSnd.setBounds(10, index, 280,30);
+					btnSnd.setBounds(10, index, 380,30);
 					btnSnd.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 14));
+					btnSnd.setHorizontalAlignment(SwingConstants.CENTER);
 					index=index+40;
 					
 					

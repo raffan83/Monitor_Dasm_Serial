@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+import javax.sql.rowset.serial.SerialException;
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JButton;
@@ -54,8 +55,7 @@ import org.jfree.ui.StandardGradientPaintTransformer;
 
 import it.lettoreSeriale.DTO.SondaDTO;
 import it.lettoreSeriale.bo.GestioneSonda;
-import it.lettoreSeriale.bo.PortReader;
-import jssc.SerialPortException;
+import it.lettoreSeriale.bo.PortRead;
 import net.miginfocom.swing.MigLayout;
 
 
@@ -73,7 +73,7 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 	DefaultValueDataset dataset1;
 	GuiWorker1 worker=null;
 	SondaDTO sonda=null;
-	PortReader portReader;
+	PortRead portReader;
 	JButton transfer;
 	JLabel tf;
 	private JButton btnZero;
@@ -96,8 +96,9 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 	private File dataLogger;
 	FileOutputStream fos;
 	PrintStream ps;
+	SimpleDateFormat sdf;
 
-	public GuiWorker1(SondaDTO s, PortReader _portReader) {
+	public GuiWorker1(SondaDTO s, PortRead _portReader) {
 
 
 		/*Metodo calcolo valore*/  
@@ -110,6 +111,7 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 		portReader=_portReader;
 		lab= new JLabel("Temp");
 
+		sdf=new SimpleDateFormat("HH:mm:ss.SSS");
 		delay=800;
 		final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyyHHmmss");
 		zero=0;
@@ -242,7 +244,7 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 							zero=d;
 							break;
 						}
-					} catch (SerialPortException e1) {
+					} catch (SerialException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
@@ -381,8 +383,8 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 					Double value;
 					try {
 						value = GestioneSonda.getValue(sonda,portReader);
-						System.out.println(value);
-					} catch (SerialPortException e) {
+						System.out.println("TRANS:"+value);
+					} catch (SerialException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -408,7 +410,7 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 				if(value!=null)	
 				{
 
-					System.out.println(value);
+					System.out.println(sdf.format(new Date())+": "+value);
 					if(media==0)
 					{
 						BigDecimal valueFormat=new BigDecimal(value-zero).setScale(precision,RoundingMode.HALF_UP);
@@ -439,8 +441,9 @@ class GuiWorker1 extends SwingWorker<Integer, Integer>{
 				Thread.sleep(delay);
 			}
 		}
-		catch (InterruptedException iex) {
-		
+		catch (InterruptedException iex) 
+		{
+			//iex.printStackTrace();
 		}
 		catch (Exception ie) {
 			ie.printStackTrace();
